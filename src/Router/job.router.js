@@ -50,4 +50,20 @@ app.get("/filter/:role", async (req, res) => {
     res.status(404).send("Error");
   }
 });
+
+// ------------- Sorting ----------------
+app.get("/sort/:sort", async (req, res) => {
+  const { sort } = req.params;
+
+  try {
+    const job = await Job.find().sort({
+      postedAt: sort === "asc" ? 1 : -1
+    });
+    res.send(job);
+  } catch (e) {
+    res.status(404).send(e);
+  }
+});
+module.exports = app;
+
 module.exports = app;
