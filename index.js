@@ -2,7 +2,9 @@ const dotenv = require("dotenv");
 const express = require("express");
 const cors = require("cors");
 const dbConnect = require("./config/db");
-const UserRoute = require("./Router/user.routes");
+const userRoute = require("./routes/user.routes");
+const flightRoute = require("./routes/flight.routes");
+const bookingRoute = require("./routes/booking.routes");
 
 dotenv.config();
 let PORT = process.env.PORT || 8080;
@@ -10,13 +12,15 @@ let PORT = process.env.PORT || 8080;
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use("/user", UserRoute);
+app.use("/flights", flightRoute);
+app.use("/", userRoute);
+app.use("/", bookingRoute);
 
 app.get("/", (req, res) => {
-  res.send("Hello");
+  res.send("<h1>Welcome to Mock-10 B23</h1>");
 });
 
 app.listen(PORT || 8080, async () => {
   await dbConnect();
-  console.log(`Listening on http://localhost:${PORT}`);
+  console.log(`Started at: http://localhost:${PORT}`);
 });
