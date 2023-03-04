@@ -20,7 +20,7 @@ app.post("/signup", async (req, res) => {
     const user = await User.findOne({ email });
     if (user) {
       return res
-        .status(404)
+        .status(201)
         .send({ message: "user already exist!!", status: false });
     } else {
       await User.create({
@@ -44,7 +44,7 @@ app.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       return res
-        .status(404)
+        .status(201)
         .send({ message: "Wrong Credential!!", status: false });
     }
 
@@ -58,7 +58,7 @@ app.post("/login", async (req, res) => {
         .send({ message: "login successfully", status: true });
     } else {
       return res
-        .status(404)
+        .status(201)
         .send({ message: "Wrong Credential!!", status: false });
     }
   } catch (e) {
