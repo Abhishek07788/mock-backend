@@ -1,68 +1,85 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const User = require("../model/user.model");
 const CryptoJS = require("crypto-js");
-
 const app = express.Router();
 
+// ---------- (Get Users) -------------
 app.get("/", async (req, res) => {
   try {
-    const users = await User.find({});
-    res.status(200).send(users);
+    const user = await User.find();
+    res.send({ user });
   } catch (e) {
-    return res.send({ message: "user already exist!!", status: false });
+    res.status(404).send(e);
   }
 });
 
-// ------------- register ---------
+// ------------ (Sign Up) --------------
 app.post("/signup", async (req, res) => {
-  const { email, password } = req.body;
+  const { name, email, password, role } = req.body;
   try {
-    const user = await User.findOne({ email });
-    if (user) {
-      return res
-        .status(201)
-        .send({ message: "user already exist!!", status: false });
+    const oldUser = await User.findOne({ email });
+    if (oldUser) {
+      return res.send({ status: false, message: "Email Already Exist!" });
     } else {
       await User.create({
+        name: name,
         email: email,
-        // Encrypt
-        password: CryptoJS.AES.encrypt(password, "!@#$%").toString(),
+        // password protect ------
+        password: CryptoJS.AES.encrypt(password, "%$#@!").toString(),
+        role: role,
       });
-      return res
-        .status(200)
-        .send({ message: "register successfully", status: true });
+      return res.send({ status: true, message: "Sign up Successfully!" });
     }
   } catch (e) {
-    res.status(404).send({ Error: e.message, status: false });
+    res.status(404).send(e);
   }
 });
 
-// ------------ login ------------
+// ------------ (Log in) --------------
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) {
-      return res
-        .status(201)
-        .send({ message: "Wrong Credential!!", status: false });
-    }
+    if (user) {
+      //decrypt password using cryptoJS -----------------
+      const decryptPass = CryptoJS.AES.decrypt(user.password, "%$#@!");
+      const loginPassword = decryptPass.toString(CryptoJS.enc.Utf8);
 
-    // Decrypt
-    const decryptPass = CryptoJS.AES.decrypt(user.password, "!@#$%");
-    const originalPass = decryptPass.toString(CryptoJS.enc.Utf8);
+      if (password === loginPassword) {
+        // --- jwt ------
+        const token = jwt.sign(
+          {
+            id: user._id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          },
+          "%$#@!",
+          { expiresIn: "30 days" }
+        );
 
-    if (originalPass === password) {
-      return res
-        .status(200)
-        .send({ message: "login successfully", status: true });
+        return res.send({
+          token: token,
+          status: true,
+          message: "Log in Successfully!",
+        });
+      } else {
+        return res.send({
+          token: null,
+          status: false,
+          message: "Wrong Password!!",
+        });
+      }
     } else {
-      return res
-        .status(201)
-        .send({ message: "Wrong Credential!!", status: false });
+      return res.send({
+        token: null,
+        status: false,
+        message: "Wrong Credential!!",
+      });
     }
   } catch (e) {
-    res.status(404).send({ Error: e.massage, status: false });
+    res.status(404).send(e);
   }
 });
 
